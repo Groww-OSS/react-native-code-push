@@ -3,7 +3,7 @@ import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
-import hoistStatics from 'hoist-non-react-statics';
+import hoistStatics from "hoist-non-react-statics";
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
@@ -26,7 +26,22 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    * dynamically "redirecting" end-users at different
    * deployments (e.g. an early access deployment for insiders).
    */
-  const config = deploymentKey ? { ...nativeConfig, ...{ deploymentKey } } : nativeConfig;
+  const config = deploymentKey
+    ? { ...nativeConfig, ...{ deploymentKey } }
+    : nativeConfig;
+
+  log("deploymentKey: " + deploymentKey);
+
+  const optionsEntries = Object.entries(nativeConfig);
+  optionsEntries.forEach(([key, value]) => {
+    log(key + ":", value);
+  });
+
+  const option = Object.entries(config);
+  option.forEach(([key, value]) => {
+    log(key + ":", value);
+  });
+
   const sdk = getPromisifiedSdk(requestFetchAdapter, config);
 
   // Use dynamically overridden getCurrentPackage() during tests.
@@ -92,15 +107,18 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 const getConfiguration = (() => {
   let config;
   return async function getConfiguration() {
-    if (config) {
-      return config;
-    } else if (testConfig) {
-      return testConfig;
-    } else {
-      config = await NativeCodePush.getConfiguration();
-      return config;
-    }
-  }
+    // TODO: Check if we can rely on previous config
+    config = await NativeCodePush.getConfiguration();
+    return config;
+    // if (config) {
+    //   return config;
+    // } else if (testConfig) {
+    //   return testConfig;
+    // } else {
+    //   config = await NativeCodePush.getConfiguration();
+    //   return config;
+    // }
+  };
 })();
 
 async function getCurrentPackage() {
